@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+* { animation: none !important; transition: none !important; }
+body { background: #ffffff; }
+html, body { height: auto; }
+#root { height: auto; }
+.shot { background: var(--panel); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; display: flex; flex-direction: column; }
+.shot > .panel { flex: 1; min-height: 0; }
+.shot-full { border: none; border-radius: 0; background: var(--bg); height: 760px; }
+.shot-full .app { height: 100%; }
+.w-340 { width: 340px; }
+.w-420 { width: 420px; }
+.w-460 { width: 460px; }
+.w-480 { width: 480px; }
+.w-560 { width: 560px; }
+.w-860 { width: 860px; }
+.w-640 { width: 640px; }
+.h-fit .panel { height: 100%; }
+.shot-plain { border: none; background: transparent; display: block; }
+.shot-row { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="sim.jsx"></script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="samples.jsx"></script>
+<script type="text/babel" src="shots.jsx"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "type": "design",
+  "designSystems": [],
+  "primaryDesignSystem": null,
+  "assets": {
+    "Navigation Monitor": {
+      "versions": [
+        {
+          "path": "Navigation Monitor.html",
+          "createdAt": "2026-10-30T10:40:12.337Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "Monitor Breakdown": {
+      "versions": [
+        {
+          "path": "Monitor Breakdown.html",
+          "createdAt": "2026-11-01T15:52:42.002Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "shots": {
+      "versions": [
+        {
+          "path": "shots.html",
+          "createdAt": "2026-11-01T16:07:53.521Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "Monitor Breakdown EN": {
+      "versions": [
+        {
+          "path": "Monitor Breakdown EN.html",
+          "createdAt": "2026-11-07T15:51:42.394Z",
+          "status": "needs-review"
+        }
+      ]
+    }
+  },
+  "createdAt": "2026-10-30T10:40:12.342Z",
+  "updatedAt": "2026-11-07T15:51:42.395Z"
+}
