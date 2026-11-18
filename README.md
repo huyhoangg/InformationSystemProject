@@ -9,7 +9,7 @@ Bản mockup giao diện web giám sát hệ thống **Điều hướng & Né v�
 
 ## Xem mockup
 
-Mở trực tiếp các file HTML trong thư mục này bằng trình duyệt:
+Phục vụ các file HTML và JSX từ thư mục gốc bằng `python -m http.server 8080`, rồi mở `http://localhost:8080` trong trình duyệt. Để chạy với dữ liệu ROS 2 và Gazebo, xem [hướng dẫn Web live](ros_gazebo_demo/README.md#chạy-web-live-bằng-docker).
 
 | File | Nội dung |
 | :-- | :-- |
@@ -22,6 +22,7 @@ Mở trực tiếp các file HTML trong thư mục này bằng trình duyệt:
 ```
 ├── Navigation Monitor.html    # Trang dashboard chính
 ├── app.jsx                    # Logic điều khiển ứng dụng & state
+├── live.jsx                   # Operator View và DS Workspace dùng backend ROS 2
 ├── components.jsx             # UI components (Map, Radar, Model Registry, Confusion Matrix, ...)
 ├── breakdown.jsx / -en.jsx    # Dàn trang 8 sheet thuyết minh (VI/EN)
 ├── sim.jsx / samples.jsx      # Dữ liệu mô phỏng

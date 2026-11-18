@@ -584,3 +584,26 @@ body {
 @media (max-width: 1080px) {
   .ds-main { grid-template-columns: 1fr; }
 }
+.live-app .topbar { flex-wrap: wrap; }
+.live-app a.btn { text-decoration: none; }
+.live-main { grid-template-columns: minmax(235px, 0.8fr) minmax(320px, 1.6fr) minmax(230px, 0.8fr); }
+.live-ds { grid-template-columns: minmax(340px, 1.1fr) minmax(315px, 1fr); }
+.live-main .map-panel .panel-body { min-height: 340px; }
+.live-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.live-manual { margin-top: 12px; }
+.live-detail { margin: 9px 0 0; color: var(--muted); }
+.live-detail + .live-actions, .live-table-scroll + .live-actions { margin-top: 12px; }
+.live-notice { padding: 0 12px; }
+.live-action-values { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0; }
+.live-action-values dt { color: var(--muted); }
+.live-action-values dd { margin: 5px 0 0; color: var(--cyan); font-family: 'IBM Plex Mono', monospace; }
+.live-table-scroll { overflow-x: auto; }
+.live-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+.live-table :is(th, td) { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left; }
+.live-table td { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+.live-table .selected, .live-matrix .diagonal { background: var(--panel-2); }
+.live-active { margin-inline-start: 8px; color: var(--green); font-size: 10px; }
+@media (max-width: 970px) {
+  .live-main, .live-ds { grid-template-columns: minmax(0, 1fr); }
+  .live-main .map-panel .panel-body { min-height: 0; height: 340px; }
+}

@@ -1,0 +1,15 @@
+**
+!ros_gazebo_demo/
+!ros_gazebo_demo/*.py
+!ros_gazebo_demo/*.sdf
+!ros_gazebo_demo/*.yaml
+!ros_gazebo_demo/inputs/
+!ros_gazebo_demo/inputs/*.py
+!ros_gazebo_demo/inputs/dataset.csv
+!Navigation Monitor.html
+!app.jsx
+!components.jsx
+!icons.jsx
+!live.jsx
+!sim.jsx
+!styles.css

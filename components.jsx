@@ -124,20 +124,21 @@ function GoalPanel({ state }) {
   );
 }
 
-function MapPanel({ state }) {
-  const W = Sim.WORLD.w * 10;
-  const H = Sim.WORLD.h * 10;
+function MapPanel({ state, world = Sim.WORLD, obstacles = Sim.OBSTACLES, start = Sim.START,
+  goal = Sim.GOAL, sectors = Sim.SECTORS, title = "Warehouse — Top View", label = "Warehouse map", markerScale = 1 }) {
+  const W = world.w * 10;
+  const H = world.h * 10;
   const sx = state.x * 10;
-  const sy = (Sim.WORLD.h - state.y) * 10;
-  const gx = Sim.GOAL.x * 10;
-  const gy = (Sim.WORLD.h - Sim.GOAL.y) * 10;
+  const sy = (world.h - state.y) * 10;
+  const gx = goal && goal.x * 10;
+  const gy = goal && (world.h - goal.y) * 10;
   const gridV = [];
-  for (let i = 0; i <= Sim.WORLD.w; i++) gridV.push(i * 10);
+  for (let i = 0; i <= world.w; i++) gridV.push(i * 10);
   const gridH = [];
-  for (let i = 0; i <= Sim.WORLD.h; i++) gridH.push(i * 10);
+  for (let i = 0; i <= world.h; i++) gridH.push(i * 10);
   return (
-    <Panel title="Warehouse — Top View" note="20 × 14 M" label="Warehouse map" className="map-panel grow" bodyClassName="map-body">
-      <svg className="map-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
+    <Panel title={title} label={label} note={`${world.w} × ${world.h} M`} className="map-panel grow" bodyClassName="map-body">
+      <svg className="map-svg" role="img" aria-label={title} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
         {gridV.map((x) => (
           <line key={`v${x}`} x1={x} y1={0} x2={x} y2={H} stroke="var(--line-soft)" strokeWidth={0.5} />
         ))}
@@ -145,19 +146,20 @@ function MapPanel({ state }) {
           <line key={`h${y}`} x1={0} y1={y} x2={W} y2={y} stroke="var(--line-soft)" strokeWidth={0.5} />
         ))}
         <rect x={0.5} y={0.5} width={W - 1} height={H - 1} fill="none" stroke="var(--line)" strokeWidth={1} />
-        {Sim.OBSTACLES.map(([rx, ry, rw, rh], i) => (
-          <rect key={i} x={rx * 10} y={(Sim.WORLD.h - ry - rh) * 10} width={rw * 10} height={rh * 10} fill="var(--map-obstacle)" stroke="var(--map-obstacle-line)" strokeWidth={0.8} />
+        {obstacles.map(([rx, ry, rw, rh], i) => (
+          <rect key={i} x={rx * 10} y={(world.h - ry - rh) * 10} width={rw * 10} height={rh * 10} fill="var(--map-obstacle)" stroke="var(--map-obstacle-line)" strokeWidth={0.8} />
         ))}
         <polyline
-          points={state.trail.map((p) => `${p.x * 10},${(Sim.WORLD.h - p.y) * 10}`).join(" ")}
+          points={state.trail.map((p) => `${p.x * 10},${(world.h - p.y) * 10}`).join(" ")}
           fill="none"
           stroke="var(--map-trail)"
           strokeWidth={1.2}
           strokeLinejoin="round"
           strokeLinecap="round"
         />
-        {Sim.SECTORS.map((sec) => {
+        {sectors.map((sec) => {
           const d = state.sectors[sec.key];
+          if (!Number.isFinite(d)) return null;
           const len = Math.min(d, 2.5) * 10;
           const ang = state.heading + ((sec.a0 + sec.a1) / 2) * (Math.PI / 180);
           return (
@@ -173,15 +175,17 @@ function MapPanel({ state }) {
             />
           );
         })}
-        <circle cx={gx} cy={gy} r={7} fill="none" stroke="var(--green)" strokeWidth={1.2} />
-        <circle cx={gx} cy={gy} r={2} fill="var(--green)" />
-        <text x={gx} y={gy + 16} textAnchor="middle" fontSize={6.5} fill="var(--green)" fontFamily="IBM Plex Mono, monospace" letterSpacing="0.1em">
-          GOAL
-        </text>
-        <text x={Sim.START.x * 10} y={(Sim.WORLD.h - Sim.START.y) * 10 - 6} textAnchor="middle" fontSize={6} fill="var(--faint)" fontFamily="IBM Plex Mono, monospace" letterSpacing="0.1em">
+        {goal && <>
+          <circle cx={gx} cy={gy} r={7} fill="none" stroke="var(--green)" strokeWidth={1.2} />
+          <circle cx={gx} cy={gy} r={2} fill="var(--green)" />
+          <text x={gx} y={gy + 16} textAnchor="middle" fontSize={6.5} fill="var(--green)" fontFamily="IBM Plex Mono, monospace" letterSpacing="0.1em">
+            GOAL
+          </text>
+        </>}
+        {start && <text x={start.x * 10} y={(world.h - start.y) * 10 - 6} textAnchor="middle" fontSize={6} fill="var(--faint)" fontFamily="IBM Plex Mono, monospace" letterSpacing="0.1em">
           START
-        </text>
-        <g transform={`translate(${sx}, ${sy}) rotate(${-state.heading * (180 / Math.PI)})`}>
+        </text>}
+        <g transform={`translate(${sx}, ${sy}) rotate(${-state.heading * (180 / Math.PI)})${markerScale === 1 ? "" : ` scale(${markerScale})`}`}>
           <polygon points="7,0 -5,4.5 -5,-4.5" fill="var(--map-robot)" stroke="var(--map-robot-line)" strokeWidth={0.8} />
         </g>
       </svg>
@@ -189,29 +193,31 @@ function MapPanel({ state }) {
   );
 }
 
-function RadarPanel({ state }) {
+function RadarPanel({ state, sectors = Sim.SECTORS, maxRange = Sim.MAX_RANGE }) {
   const ri = 26;
-  const perM = 27.5;
+  const perM = 110 / maxRange;
   const pt = (aDeg, r) => {
     const a = (aDeg * Math.PI) / 180;
     return [(-Math.sin(a) * r), (-Math.cos(a) * r)];
   };
   const rings = [1, 2, 3, 4].map((k) => {
-    const r = ri + perM * k;
+    const meters = maxRange * k / 4;
+    const r = ri + perM * meters;
     const [x1, y1] = pt(-120, r);
     const [x2, y2] = pt(120, r);
     return (
       <g key={k}>
         <path d={`M ${x1} ${y1} A ${r} ${r} 0 1 0 ${x2} ${y2}`} fill="none" stroke="var(--line-soft)" strokeWidth={k === 4 ? 1 : 0.7} />
         <text x={5} y={-r + 3} fontSize={8} fill="var(--faint)" fontFamily="IBM Plex Mono, monospace">
-          {k}m
+          {Number(meters.toFixed(2))}m
         </text>
       </g>
     );
   });
-  const wedges = Sim.SECTORS.map((sec) => {
+  const wedges = sectors.map((sec) => {
     const d = state.sectors[sec.key];
-    const outer = ri + Math.min(d, Sim.MAX_RANGE) * perM;
+    if (!Number.isFinite(d)) return null;
+    const outer = ri + Math.min(d, maxRange) * perM;
     const [x1, y1] = pt(sec.a0, ri);
     const [xo1, yo1] = pt(sec.a0, outer);
     const [xo2, yo2] = pt(sec.a1, outer);
@@ -230,23 +236,24 @@ function RadarPanel({ state }) {
     );
   });
   return (
-    <Panel title="LiDAR — Directional Min Distance" note="RANGE 4.0 M" label="LiDAR radar" className="radar-panel">
+    <Panel title="LiDAR — Directional Min Distance" note={`RANGE ${maxRange.toFixed(1)} M`} label="LiDAR radar" className="radar-panel">
       <svg className="radar-svg" viewBox="-150 -150 300 190">
         {rings}
         {wedges}
         <circle cx={0} cy={0} r={3} fill="var(--text)" />
       </svg>
       <div className="sector-rows">
-        {Sim.SECTORS.map((sec) => {
+        {sectors.map((sec) => {
           const d = state.sectors[sec.key];
+          const valid = Number.isFinite(d);
           const c = lidarColor(d);
           return (
             <div className="sector-row" key={sec.key}>
               <span className="s-label">{sec.label}</span>
               <span className="s-bar">
-                <span style={{ display: "block", height: "100%", width: `${(Math.min(d, 4) / 4) * 100}%`, background: c }}></span>
+                {valid && <span style={{ display: "block", height: "100%", width: `${(Math.min(d, maxRange) / maxRange) * 100}%`, background: c }}></span>}
               </span>
-              <span className="s-val">{Sim.fmt(d)} m</span>
+              <span className="s-val">{valid ? `${Sim.fmt(d)} m` : "—"}</span>
             </div>
           );
         })}

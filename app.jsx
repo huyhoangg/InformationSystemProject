@@ -399,6 +399,7 @@ function App() {
             <span className="clock">{Sim.fmtClock(state.t)}</span>
           </div>
           <div className="controls">
+            {new URLSearchParams(location.search).has("mock") && <a className="btn" href="?live=1">Go live</a>}
             <button className="btn" onClick={toggleTheme} title="Toggle light / dark">
               {theme === "light" ? <IconMoon /> : <IconSun />}
               {theme === "light" ? "Dark" : "Light"}
@@ -482,4 +483,5 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+const liveMode = new URLSearchParams(location.search).get("live") === "1";
+ReactDOM.createRoot(document.getElementById("root")).render(liveMode ? <LiveApp /> : <App />);
