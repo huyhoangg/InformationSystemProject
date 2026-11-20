@@ -15,19 +15,14 @@ INPUTS = ROOT / 'inputs'
 
 def prepare(output):
     output = output.resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix='.training-', dir=output.parent) as temporary:
-        work = Path(temporary)
-        reference = work / 'reference'
+        reference = Path(temporary) / 'reference'
         reference.mkdir()
-        trainer = work / 'train_models.py'
         dataset = reference / 'dataset.csv'
-        copyfile(INPUTS / 'train_models.py', trainer)
         copyfile(INPUTS / 'dataset.csv', dataset)
-        copyfile(INPUTS / 'lidar_features.py', reference / 'lidar_features.py')
-
-        subprocess.run([sys.executable, str(trainer), '--data', str(dataset)], check=True)
-        next((work / 'models').iterdir()).rename(reference / 'models')
-        next((work / 'results').iterdir()).rename(reference / 'results')
+        subprocess.run([sys.executable, str(INPUTS / 'train_models.py'), '--data', str(dataset),
+                        '--output', str(reference)], check=True)
         os.replace(reference, output)
 
 

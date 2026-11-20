@@ -3,6 +3,7 @@
   <world name="integration_demo">
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact"/>
     <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
       <render_engine>ogre2</render_engine>
     </plugin>
@@ -49,6 +50,50 @@
           <pose>0.8 -1.1 0.25 0 0 0</pose>
           <geometry><box><size>0.4 0.5 0.5</size></box></geometry>
         </visual>
+        <collision name="east_boundary">
+          <pose>3.95 0 0.30 0 0 0</pose>
+          <geometry><box><size>0.10 8 0.60</size></box></geometry>
+        </collision>
+        <visual name="east_boundary_visual">
+          <pose>3.95 0 0.30 0 0 0</pose>
+          <geometry><box><size>0.10 8 0.60</size></box></geometry>
+        </visual>
+        <collision name="west_boundary">
+          <pose>-3.95 0 0.30 0 0 0</pose>
+          <geometry><box><size>0.10 8 0.60</size></box></geometry>
+        </collision>
+        <visual name="west_boundary_visual">
+          <pose>-3.95 0 0.30 0 0 0</pose>
+          <geometry><box><size>0.10 8 0.60</size></box></geometry>
+        </visual>
+        <collision name="north_boundary">
+          <pose>0 3.95 0.30 0 0 0</pose>
+          <geometry><box><size>7.80 0.10 0.60</size></box></geometry>
+        </collision>
+        <visual name="north_boundary_visual">
+          <pose>0 3.95 0.30 0 0 0</pose>
+          <geometry><box><size>7.80 0.10 0.60</size></box></geometry>
+        </visual>
+        <collision name="south_boundary">
+          <pose>0 -3.95 0.30 0 0 0</pose>
+          <geometry><box><size>7.80 0.10 0.60</size></box></geometry>
+        </collision>
+        <visual name="south_boundary_visual">
+          <pose>0 -3.95 0.30 0 0 0</pose>
+          <geometry><box><size>7.80 0.10 0.60</size></box></geometry>
+        </visual>
+        <sensor name="obstacle_contacts" type="contact">
+          <contact>
+            <collision>front_wall</collision>
+            <collision>left_box</collision>
+            <collision>right_box</collision>
+            <collision>east_boundary</collision>
+            <collision>west_boundary</collision>
+            <collision>north_boundary</collision>
+            <collision>south_boundary</collision>
+            <topic>/demo/contacts</topic>
+          </contact>
+        </sensor>
       </link>
     </model>
     <model name="demo_robot">
@@ -116,9 +161,17 @@
       <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
         <left_joint>left_joint</left_joint><right_joint>right_joint</right_joint>
         <wheel_separation>0.28</wheel_separation><wheel_radius>0.06</wheel_radius>
-        <topic>/demo/cmd_vel</topic><odom_topic>/demo/odom</odom_topic>
+        <topic>/demo/cmd_vel</topic><odom_topic>/demo/wheel_odom</odom_topic>
         <odom_publish_frequency>30</odom_publish_frequency>
         <frame_id>odom</frame_id><child_frame_id>base_link</child_frame_id>
+      </plugin>
+      <!-- Publish the simulator pose and motion in the same frame as the arena. -->
+      <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+        <odom_topic>/demo/odom</odom_topic>
+        <odom_frame>odom</odom_frame>
+        <robot_base_frame>base_link</robot_base_frame>
+        <odom_publish_frequency>30</odom_publish_frequency>
+        <dimensions>2</dimensions>
       </plugin>
     </model>
   </world>
