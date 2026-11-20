@@ -586,23 +586,56 @@ body {
 }
 .live-app .topbar { flex-wrap: wrap; }
 .live-app a.btn { text-decoration: none; }
-.live-main { grid-template-columns: minmax(235px, 0.8fr) minmax(320px, 1.6fr) minmax(230px, 0.8fr); }
-.live-ds { grid-template-columns: minmax(340px, 1.1fr) minmax(315px, 1fr); }
+.live-main { grid-template-columns: minmax(235px, 0.8fr) minmax(320px, 1.6fr) minmax(230px, 0.8fr); align-items: start; overflow-y: auto; }
+.live-ds { grid-template-columns: minmax(340px, 1.1fr) minmax(315px, 1fr); align-items: start; overflow-y: auto; }
+.live-ds .col { min-width: 0; }
+.live-ds .panel { flex-shrink: 0; }
 .live-main .map-panel .panel-body { min-height: 340px; }
 .live-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .live-manual { margin-top: 12px; }
+.live-map-picking { cursor: crosshair; }
+.live-goal-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; margin-top: 12px; }
+.live-goal-form .live-field { min-width: 0; margin: 0; }
+.live-pick-goal { margin-top: 8px; }
 .live-detail { margin: 9px 0 0; color: var(--muted); }
 .live-detail + .live-actions, .live-table-scroll + .live-actions { margin-top: 12px; }
 .live-notice { padding: 0 12px; }
 .live-action-values { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0; }
 .live-action-values dt { color: var(--muted); }
 .live-action-values dd { margin: 5px 0 0; color: var(--cyan); font-family: 'IBM Plex Mono', monospace; }
+.live-run-list { max-height: 270px; overflow-y: auto; }
+.live-run { padding: 7px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.live-run summary { cursor: pointer; }
+.live-run summary span { margin-inline-start: 6px; color: var(--muted); }
+.live-run summary time { display: block; margin: 2px 0 0 12px; color: var(--muted); font-size: 11px; }
+.live-run .live-action-values { margin-top: 8px; }
 .live-table-scroll { overflow-x: auto; }
 .live-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
 .live-table :is(th, td) { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left; }
 .live-table td { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
 .live-table .selected, .live-matrix .diagonal { background: var(--panel-2); }
 .live-active { margin-inline-start: 8px; color: var(--green); font-size: 10px; }
+.live-field { display: grid; gap: 5px; margin-bottom: 10px; color: var(--muted); }
+.live-field :is(select, input) {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--text);
+  background: var(--panel-2);
+  font: inherit;
+}
+.live-label-counts { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0; list-style: none; }
+.live-label-counts li { padding: 3px 7px; border: 1px solid var(--line); border-radius: 4px; font-family: var(--font-mono); }
+.live-samples { font-size: 12px; }
+.live-mistakes-scroll { max-height: 320px; overflow: auto; }
+.live-ds-actions { margin-top: 12px; }
+.live-error { color: var(--red); margin: 9px 0 0; }
+.live-warning { color: var(--amber); margin: 9px 0 0; }
+.live-matrix td.diagonal { background: var(--good-tint); }
+.live-matrix td.live-mismatch { background: var(--bad-tint); }
+.live-matrix button[aria-pressed="true"] { border-color: var(--red); }
 @media (max-width: 970px) {
   .live-main, .live-ds { grid-template-columns: minmax(0, 1fr); }
   .live-main .map-panel .panel-body { min-height: 0; height: 340px; }

@@ -125,20 +125,30 @@ function GoalPanel({ state }) {
 }
 
 function MapPanel({ state, world = Sim.WORLD, obstacles = Sim.OBSTACLES, start = Sim.START,
-  goal = Sim.GOAL, sectors = Sim.SECTORS, title = "Warehouse — Top View", label = "Warehouse map", markerScale = 1 }) {
+  goal = Sim.GOAL, sectors = Sim.SECTORS, title = "Warehouse — Top View", label = "Warehouse map",
+  markerScale = 1, onPickGoal }) {
   const W = world.w * 10;
   const H = world.h * 10;
   const sx = state.x * 10;
   const sy = (world.h - state.y) * 10;
   const gx = goal && goal.x * 10;
   const gy = goal && (world.h - goal.y) * 10;
+  const hasGoalRadius = Number.isFinite(goal?.radius);
+  const goalRadius = hasGoalRadius ? goal.radius * 10 : 7;
   const gridV = [];
   for (let i = 0; i <= world.w; i++) gridV.push(i * 10);
   const gridH = [];
   for (let i = 0; i <= world.h; i++) gridH.push(i * 10);
+  const pickGoal = (event) => {
+    const matrix = event.currentTarget.getScreenCTM();
+    if (!matrix) return;
+    const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+    onPickGoal(point.x / 10, (H - point.y) / 10);
+  };
   return (
     <Panel title={title} label={label} note={`${world.w} × ${world.h} M`} className="map-panel grow" bodyClassName="map-body">
-      <svg className="map-svg" role="img" aria-label={title} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
+      <svg className={`map-svg${onPickGoal ? " live-map-picking" : ""}`} role="img" aria-label={title}
+        viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" onClick={onPickGoal ? pickGoal : undefined}>
         {gridV.map((x) => (
           <line key={`v${x}`} x1={x} y1={0} x2={x} y2={H} stroke="var(--line-soft)" strokeWidth={0.5} />
         ))}
@@ -176,9 +186,10 @@ function MapPanel({ state, world = Sim.WORLD, obstacles = Sim.OBSTACLES, start =
           );
         })}
         {goal && <>
-          <circle cx={gx} cy={gy} r={7} fill="none" stroke="var(--green)" strokeWidth={1.2} />
-          <circle cx={gx} cy={gy} r={2} fill="var(--green)" />
-          <text x={gx} y={gy + 16} textAnchor="middle" fontSize={6.5} fill="var(--green)" fontFamily="IBM Plex Mono, monospace" letterSpacing="0.1em">
+          <circle cx={gx} cy={gy} r={goalRadius} fill="none" stroke="var(--green)" strokeWidth={hasGoalRadius ? 0.35 : 1.2} />
+          <circle cx={gx} cy={gy} r={hasGoalRadius ? Math.min(0.65, goalRadius * 0.4) : 2} fill="var(--green)" />
+          <text x={gx} y={gy + (hasGoalRadius ? goalRadius + 3.3 : 16)} textAnchor="middle"
+            fontSize={hasGoalRadius ? 2.6 : 6.5} fill="var(--green)" fontFamily="IBM Plex Mono, monospace" letterSpacing="0.1em">
             GOAL
           </text>
         </>}
