@@ -15,6 +15,10 @@ def generate_launch_description():
         DeclareLaunchArgument('headless', default_value='true', choices=['true', 'false']),
         DeclareLaunchArgument('web', default_value='false', choices=['true', 'false']),
         DeclareLaunchArgument('web_host', default_value='127.0.0.1'),
+        DeclareLaunchArgument('goal_x', default_value='1.10'),
+        DeclareLaunchArgument('goal_y', default_value='0.75'),
+        DeclareLaunchArgument('goal_radius', default_value='0.20'),
+        DeclareLaunchArgument('robot_name', default_value='demo_robot'),
         ExecuteProcess(
             cmd=['gz', 'sim', '-r', '-s', '--headless-rendering', world],
             condition=IfCondition(headless),
@@ -35,7 +39,9 @@ def generate_launch_description():
             on_exit=Shutdown(reason='ROS–Gazebo bridge exited'),
         ),
         ExecuteProcess(
-            cmd=['python3', str(directory / 'web_bridge.py'), '--host', LaunchConfiguration('web_host')],
+            cmd=['python3', str(directory / 'web_bridge.py'), '--host', LaunchConfiguration('web_host'),
+                 '--goal-x', LaunchConfiguration('goal_x'), '--goal-y', LaunchConfiguration('goal_y'),
+                 '--goal-radius', LaunchConfiguration('goal_radius'), '--robot-name', LaunchConfiguration('robot_name')],
             condition=IfCondition(LaunchConfiguration('web')),
             output='screen',
             on_exit=Shutdown(reason='Web bridge exited'),
