@@ -10,13 +10,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends python3-sklearn \
     && rm -rf /var/lib/apt/lists/*
 
-FROM runtime
+FROM runtime AS monitor
 ENV LIBGL_ALWAYS_SOFTWARE=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 WORKDIR /demo
 COPY ros_gazebo_demo/bridge.yaml ros_gazebo_demo/demo.launch.py ros_gazebo_demo/demo.sdf ros_gazebo_demo/smoke_test.py ros_gazebo_demo/web_bridge.py ros_gazebo_demo/monitor_http.py ros_gazebo_demo/ds_workspace.py ros_gazebo_demo/prepare_models.py ./
 COPY ros_gazebo_demo/navigation_history.py ./
+COPY ros_gazebo_demo/scenarios.py ros_gazebo_demo/maze.sdf ./
 COPY ["Navigation Monitor.html", "app.jsx", "components.jsx", "icons.jsx", "ds-workspace.jsx", "live.jsx", "sim.jsx", "styles.css", "./web/"]
 COPY ros_gazebo_demo/inputs/ ./inputs/
-RUN python3 prepare_models.py
 EXPOSE 8000
 CMD ["ros2", "launch", "/demo/demo.launch.py", "web:=true", "web_host:=0.0.0.0"]
+
+FROM monitor
+COPY ros_gazebo_demo/data/ ./data/
+RUN python3 prepare_models.py
