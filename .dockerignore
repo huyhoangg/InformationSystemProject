@@ -5,7 +5,8 @@
 !ros_gazebo_demo/*.yaml
 !ros_gazebo_demo/inputs/
 !ros_gazebo_demo/inputs/*.py
-!ros_gazebo_demo/inputs/dataset.csv
+!ros_gazebo_demo/data/
+!ros_gazebo_demo/data/*.csv
 !Navigation Monitor.html
 !app.jsx
 !components.jsx

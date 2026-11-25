@@ -2,7 +2,7 @@
 """Train KNN, Gaussian Naive Bayes, Decision Tree and Random Forest from a driving session.
 Python 3.8 compatible; no ROS process needed. Outputs are created beside script.
 Example: /usr/bin/python3 train_models.py --data data/manual_20261118_025829_54af3040.csv
-Evaluation uses a holdout within a single recording session.
+Evaluation supports a separate captured session or a holdout within one session.
 """
 import argparse
 import csv
@@ -10,7 +10,8 @@ import hashlib
 import io
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
+from time import perf_counter
 import uuid
 
 import joblib
@@ -31,18 +32,11 @@ ODOMETRY_AND_GOAL_FEATURES = ['linear_velocity', 'angular_velocity', 'goal_dista
 NAVIGATION_FEATURES = FEATURES + ODOMETRY_AND_GOAL_FEATURES
 ACTIONS = {'forward': [0.30, 0.0], 'left': [0.0, 0.70], 'right': [0.0, -0.70]}
 NAVIGATION_ACTIONS = {**ACTIONS, 'stop': [0.0, 0.0]}
-FEATURE_PROFILES = {tuple(FEATURES): ACTIONS, tuple(NAVIGATION_FEATURES): NAVIGATION_ACTIONS}
 GAP_SECONDS = 2.0
 BEFORE_COMMAND = 'before_command'
 
 
-def dataset_features(fields):
-    return NAVIGATION_FEATURES if any(name in fields for name in ODOMETRY_AND_GOAL_FEATURES) else FEATURES
-
-
-def capture_timing(features, rows):
-    if features != NAVIGATION_FEATURES:
-        return None
+def capture_timing(rows):
     if rows and all(row.get('capture_timing') == BEFORE_COMMAND for row in rows):
         return BEFORE_COMMAND
     return 'unknown'
@@ -78,10 +72,10 @@ def split_masks(fields, rows, times):
     return times < boundary, times >= boundary, boundary
 
 
-def prepare_dataset(fields, rows):
-    features = dataset_features(fields)
-    actions = FEATURE_PROFILES[tuple(features)]
-    required = features + ['action', 'scan_time', 'session_id', 'linear_x', 'angular_z']
+def validate_session(fields, rows):
+    features = NAVIGATION_FEATURES
+    actions = NAVIGATION_ACTIONS
+    required = features + ['action', 'scan_time', 'session_id', 'world', 'linear_x', 'angular_z']
     missing = [name for name in required if name not in fields]
     if missing:
         raise ValueError('Missing CSV columns: ' + ', '.join(missing))
@@ -92,6 +86,8 @@ def prepare_dataset(fields, rows):
     sessions = {row['session_id'] for row in rows}
     if len(sessions) != 1 or not rows[0]['session_id']:
         raise ValueError('Choose a CSV containing exactly one driving session.')
+    if len({row['world'] for row in rows}) != 1 or not rows[0]['world']:
+        raise ValueError('Choose a CSV recorded on exactly one world.')
     try:
         X = np.array([[float(row[k]) for k in features] for row in rows])
         y = np.array([row['action'] for row in rows])
@@ -101,18 +97,24 @@ def prepare_dataset(fields, rows):
         raise ValueError('CSV contains missing or invalid numeric values.') from error
     if not np.isfinite(X).all() or (X[:, :len(FEATURES)] < 0).any() or not np.isfinite(times).all():
         raise ValueError('Features and scan times must be finite. LiDAR distances must be nonnegative.')
-    if features == NAVIGATION_FEATURES:
-        distances, angles = X[:, -2], X[:, -1]
-        if (distances < 0).any() or (np.abs(angles) > np.pi + 1e-6).any():
-            raise ValueError('Goal distance must be nonnegative and goal angle in radians within [-pi, pi].')
+    distances, angles = X[:, -2], X[:, -1]
+    if (distances < 0).any() or (np.abs(angles) > np.pi + 1e-6).any():
+        raise ValueError('Goal distance must be nonnegative and goal angle in radians within [-pi, pi].')
     if not (np.diff(times) > 0).all():
         raise ValueError('Scan times must increase strictly within the session.')
     if set(y) != set(actions):
         raise ValueError('The dataset must contain exactly these labels: ' + ', '.join(actions))
     expected = np.array([actions[label] for label in y])
     if not np.allclose(commands, expected, atol=1e-6):
-        raise ValueError('Use a session recorded with commands of 0.30 m/s and +/-0.70 rad/s.')
+        forward, turn = actions['forward'][0], actions['left'][1]
+        raise ValueError(f'Use a session recorded with commands of {forward:.2f} m/s and +/-{turn:.2f} rad/s.')
 
+    return X, y, times
+
+
+def prepare_dataset(fields, rows):
+    X, y, times = validate_session(fields, rows)
+    actions = NAVIGATION_ACTIONS
     train, test, boundary = split_masks(fields, rows, times)
     for name, mask in [('train', train), ('test', test)]:
         if set(y[mask]) != set(actions):
@@ -123,13 +125,33 @@ def prepare_dataset(fields, rows):
     return X, y, times, train, test, boundary
 
 
-def train_models(path, model_dir, result_dir):
+def train_models(path, model_dir, result_dir, test_path=None):
     data = path.read_bytes()
     fields, rows = read_csv(data)
-    X, y, times, train, test, boundary = prepare_dataset(fields, rows)
-    features = dataset_features(fields)
-    strategy = split_strategy(fields)
-    actions = FEATURE_PROFILES[tuple(features)]
+    features = NAVIGATION_FEATURES
+    test_manifest = {}
+    if test_path is None:
+        X, y, times, train, test, boundary = prepare_dataset(fields, rows)
+        X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
+        test_indices = np.flatnonzero(test)
+        strategy = split_strategy(fields)
+        excluded = int((~(train | test)).sum())
+        limitation = 'Single-session holdout. Offline action scores do not measure live navigation success.'
+    else:
+        test_data = test_path.read_bytes()
+        test_fields, test_rows = read_csv(test_data)
+        X_train, y_train, _ = validate_session(fields, rows)
+        X_test, y_test, times = validate_session(test_fields, test_rows)
+        if rows[0]['session_id'] == test_rows[0]['session_id']:
+            raise ValueError('Choose a separate recording session for testing.')
+        if rows[0]['world'] != test_rows[0]['world']:
+            raise ValueError('Train and test sessions must use the same world.')
+        test_manifest = dict(test_file=test_path.name, test_sha256=hashlib.sha256(test_data).hexdigest(),
+                             test_session_id=test_rows[0]['session_id'])
+        test_indices = np.arange(len(test_rows))
+        strategy, boundary, excluded = 'by_session', None, 0
+        limitation = 'Separate recording sessions in the same world. Navigation requires separate live trials.'
+    actions = NAVIGATION_ACTIONS
     labels = list(actions)
     model_dir.mkdir(parents=True)
     result_dir.mkdir(parents=True)
@@ -141,33 +163,39 @@ def train_models(path, model_dir, result_dir):
                                                 class_weight='balanced', random_state=42, n_jobs=1),
         'baseline': DummyClassifier(strategy='most_frequent'),
     }
-    print('Tong {} | Train {} | Test {} | Bo qua vung dem {}'.format(
-        len(rows), int(train.sum()), int(test.sum()), int((~(train | test)).sum())))
-    print('DANH GIA SO BO: cung mot phien thu, chua danh gia tranh va cham.')
+    total = len(y_train) + len(y_test) + excluded
+    params = {name: {key: value for key, value in model.get_params(deep=True).items()
+                     if value is None or isinstance(value, (str, bool, int, float))}
+              for name, model in models.items()}
+    print(f'Total {total} | Train {len(y_train)} | Test {len(y_test)} | Excluded {excluded} | {strategy}')
     metrics = []
     reports = {}
     predictions = {}
+    fit_seconds = {}
     for name, model in models.items():
-        model.fit(X[train], y[train])
-        predicted = model.predict(X[test])
+        start = perf_counter()
+        model.fit(X_train, y_train)
+        fit_seconds[name] = perf_counter() - start
+        predicted = model.predict(X_test)
         predictions[name] = predicted
         score = {
             'model': name,
-            'accuracy': float(accuracy_score(y[test], predicted)),
-            'balanced_accuracy': float(balanced_accuracy_score(y[test], predicted)),
-            'macro_f1': float(f1_score(y[test], predicted, labels=labels, average='macro', zero_division=0)),
+            'accuracy': float(accuracy_score(y_test, predicted)),
+            'balanced_accuracy': float(balanced_accuracy_score(y_test, predicted)),
+            'macro_f1': float(f1_score(y_test, predicted, labels=labels, average='macro', zero_division=0)),
         }
         metrics.append(score)
-        reports[name] = classification_report(y[test], predicted, labels=labels, output_dict=True, zero_division=0)
+        reports[name] = classification_report(y_test, predicted, labels=labels, output_dict=True, zero_division=0)
         with (result_dir / (name + '_confusion.csv')).open('w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['true/predicted'] + labels)
-            for label, values in zip(labels, confusion_matrix(y[test], predicted, labels=labels)):
+            for label, values in zip(labels, confusion_matrix(y_test, predicted, labels=labels)):
                 writer.writerow([label] + values.tolist())
         if name != 'baseline':
             joblib.dump({'model': model, 'feature_names': features, 'actions': actions,
                          'sector_centers_deg': [90, 45, 0, -45, -90], 'half_width_deg': 10.0,
-                         'sklearn_version': sklearn.__version__, 'training_scope': 'train_split_only'},
+                         'sklearn_version': sklearn.__version__, 'training_scope': 'train_split_only',
+                         'world': rows[0]['world']},
                         model_dir / (name + '.joblib'))
         print('{:15s} Accuracy={:.1%} Balanced={:.1%} Macro-F1={:.3f}'.format(
             name, score['accuracy'], score['balanced_accuracy'], score['macro_f1']))
@@ -178,20 +206,22 @@ def train_models(path, model_dir, result_dir):
     with (result_dir / 'test_predictions.csv').open('w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['source_csv_row', 'scan_time', 'true_action'] + list(models))
-        for j, index in enumerate(np.flatnonzero(test)):
-            writer.writerow([int(index) + 2, times[index], y[index]] + [predictions[n][j] for n in models])
+        for j, index in enumerate(test_indices):
+            writer.writerow([int(index) + 2, times[index], y_test[j]] + [predictions[n][j] for n in models])
     manifest = {
         'source_file': path.name, 'sha256': hashlib.sha256(data).hexdigest(),
         'session_id': rows[0]['session_id'], 'sklearn_version': sklearn.__version__,
-        'features': features, 'labels': labels, 'capture_timing': capture_timing(features, rows),
-        'total': len(rows), 'train': int(train.sum()), 'test': int(test.sum()),
-        'excluded_gap': int((~(train | test)).sum()), 'boundary_scan_time': float(boundary),
-        'split_strategy': strategy, 'gap_seconds_each_side': 0.0 if strategy == 'by_run' else GAP_SECONDS,
-        'actions': actions,
-        'split_class_counts': {n: {label: int(np.sum(y[m] == label)) for label in labels}
-                               for n, m in [('train', train), ('test', test)]},
-        'close_forward_samples_not_deleted': int(np.sum((y == 'forward') & (X[:, 2] <= 0.15))),
-        'limitation': 'Single-session holdout. Offline action scores do not measure live navigation success.',
+        'world': rows[0]['world'], 'features': features, 'labels': labels, 'capture_timing': capture_timing(rows),
+        'total': total, 'train': len(y_train), 'test': len(y_test), 'excluded_gap': excluded,
+        'boundary_scan_time': float(boundary) if boundary is not None else None,
+        'split_strategy': strategy, 'gap_seconds_each_side': GAP_SECONDS if strategy == 'temporal_holdout' else 0.0,
+        'actions': actions, 'model_params': params,
+        'trained_at': datetime.now(timezone.utc).isoformat(), 'fit_seconds': fit_seconds,
+        'feature_medians': np.median(X_train, axis=0).tolist(),
+        'split_class_counts': {name: {label: int(np.sum(target == label)) for label in labels}
+                               for name, target in [('train', y_train), ('test', y_test)]},
+        'limitation': limitation,
+        **test_manifest,
     }
     (result_dir / 'manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
     (result_dir / 'classification_reports.json').write_text(json.dumps(reports, indent=2), encoding='utf-8')
@@ -203,6 +233,7 @@ def train_models(path, model_dir, result_dir):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data', required=True, type=Path)
+    parser.add_argument('--test-data', type=Path, help='Use an independent recorded session as the test set.')
     parser.add_argument('--output', type=Path, help='Write models/ and results/ under this directory.')
     args = parser.parse_args()
     if args.output is None:
@@ -212,7 +243,7 @@ def main():
     else:
         model_dir, result_dir = args.output / 'models', args.output / 'results'
     try:
-        train_models(args.data.expanduser().resolve(), model_dir, result_dir)
+        train_models(args.data.expanduser().resolve(), model_dir, result_dir, args.test_data)
     except (csv.Error, OSError, ValueError) as error:
         parser.error(str(error))
 

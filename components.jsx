@@ -193,7 +193,7 @@ function MapPanel({ state, world = Sim.WORLD, obstacles = Sim.OBSTACLES, start =
             GOAL
           </text>
         </>}
-        {start && <text x={start.x * 10} y={(world.h - start.y) * 10 - 6} textAnchor="middle" fontSize={6} fill="var(--faint)" fontFamily="IBM Plex Mono, monospace" letterSpacing="0.1em">
+        {start && <text x={start.x * 10} y={(world.h - start.y) * 10 - 6 * markerScale} textAnchor="middle" fontSize={6 * markerScale} fill="var(--faint)" fontFamily="IBM Plex Mono, monospace" letterSpacing="0.1em">
           START
         </text>}
         <g transform={`translate(${sx}, ${sy}) rotate(${-state.heading * (180 / Math.PI)})${markerScale === 1 ? "" : ` scale(${markerScale})`}`}>
@@ -299,7 +299,7 @@ function CycleLog({ entries }) {
               <span>#{String(e.cycle).padStart(4, "0")}</span>
               <span>{Sim.fmtLogTime(e.t)}</span>
               <span className="l-action" style={{ color: ACTION_META[e.action].color }}>{e.action}</span>
-              <span className="l-detail">front {Sim.fmt(e.front)} m · goal {Sim.fmt(e.goalDist)} m</span>
+              <span className="l-detail">front {Sim.fmt(e.front)} m · goal {Sim.fmt(e.goalDist)} m{e.sent && <> · sent {e.sent}</>}</span>
             </div>
           )
         )}

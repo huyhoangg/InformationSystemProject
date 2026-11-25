@@ -1,11 +1,17 @@
-# Navigation Monitor — Mockup Giao diện Giám sát
+# Navigation Monitor
 
-Bản mockup giao diện web giám sát hệ thống **Điều hướng & Né vật cản của Mobile Robot trong Gazebo dựa trên Machine Learning**.
+Ứng dụng web **Điều hướng và né vật cản cho robot di động trong Gazebo bằng Machine Learning**. Có Operator View, DS Workspace và bản mockup dùng để đối chiếu thiết kế.
 
 - **Môn học:** Hệ thống thông minh (Intelligent Systems) — ĐH Bách Khoa, ĐHQG-HCM
 - **Giảng viên hướng dẫn:** PGS. TS. Quản Thành Thơ
 - **Nhóm thực hiện:** Phạm Xuân Hiển · Nguyễn Thành Đạt · Nguyễn Huy Hoàng
 - **Phiên bản:** 2.0
+
+## Chạy bản trình diễn
+
+Bản trình diễn dùng **ROS 2 Jazzy và Gazebo Harmonic** trong một container. Bộ chọn **Map** chuyển giữa **Obstacle Arena** cùng robot `demo_robot` và **MazeBot Labyrinth** cùng robot `mazebot`. Operator View hiển thị trạng thái, LiDAR, bản đồ 2D và lệnh điều khiển của robot trên map đang chọn.
+
+DS Workspace mở dữ liệu, kết quả train/test và model tương ứng với map đang chọn. App chỉ dùng bộ 9 feature, bốn nhãn và các model đã train trên cùng map. Người chấm có thể dùng sẵn model đóng gói, hoặc lái tay bằng W/A/D/S để tạo dữ liệu mới. [Lệnh Docker và kịch bản kiểm tra](ros_gazebo_demo/README.md#chạy-web-live-bằng-docker)
 
 ## Xem mockup
 
@@ -36,4 +42,4 @@ Phục vụ các file HTML và JSX từ thư mục gốc bằng `python -m http.
 ## Tính năng chính
 
 - **Operator View live** cho phép chọn đích trên bản đồ hoặc nhập tọa độ, bắt đầu lượt lái tay hoặc tự chạy và ghi lịch sử khi kết thúc. Trong lượt lái tay, W/A/D điều khiển robot và S ghi mẫu STOP. Một phiên thu có thể gom mẫu từ nhiều lượt.
-- **DS Workspace:** chọn hoặc tải CSV lên, xem phân bố nhãn, huấn luyện KNN, Gaussian Naive Bayes, Decision Tree và Random Forest, so sánh với majority baseline, xem confusion matrix và mẫu dự đoán sai trên tập test. Chọn một model từ lần train bất kỳ khi robot đang dừng.
+- **DS Workspace** hỗ trợ chọn và tải CSV, xem phân bố nhãn, huấn luyện KNN, Gaussian Naive Bayes, Decision Tree và Random Forest, xem confusion matrix và truy lại mẫu dự đoán sai. Có bảng so sánh các lượt tự chạy với cùng điểm xuất phát và đích.
