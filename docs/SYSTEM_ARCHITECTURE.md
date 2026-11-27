@@ -135,7 +135,7 @@ Trong map demo, `setup.map` có `name`, `min_x`, `min_y`, `w`, `h` và `obstacle
 2. Runtime đặt timer 0,1 s, tương đương khoảng 10 Hz theo nhịp timer. `ready()` yêu cầu scan và odometry mới trong 0,8 s, đủ năm khoảng cách và có subscriber cho `/cmd_vel`.
 3. `start_manual` mở lượt lái tay tới đích hiện tại. Mỗi lệnh kéo dài tối đa 0,55 s và có thể gia hạn. Nhịp hết hạn gửi vận tốc 0 và chờ thao tác kế tiếp trong cùng lượt. Khi bắt đầu nhịp hoặc đổi hành động, adapter ghi chín feature trước khi phát lệnh. Khi đang giữ lệnh, adapter lấy thêm mẫu mỗi 0,30 s theo timestamp LiDAR khi LiDAR và odometry lệch tối đa 0,20 s.
 4. Trong `auto`, runtime chọn vector 5 hoặc 9 feature theo bundle active, rồi gọi `model.predict([features])` và phát `Twist` lên `/cmd_vel`. Với vector 9 feature, runtime kiểm tra độ lệch timestamp giống lúc thu mẫu. `select_model()` nạp đúng cặp mã lần train và thuật toán khi robot ở `idle`.
-5. Cả hai chế độ dùng khoảng cách từ pose thật để phát vận tốc 0 và đánh dấu `reached` khi vào bán kính. Sau lượt lái tay, phím S xác nhận thêm nhãn STOP nếu có scan và odometry mới, đồng bộ và robot còn ở trong vòng đích. Contact, `End run`, mất telemetry hoặc hết thời hạn đều kết thúc lượt. Guard LiDAR 0,38 m là ngưỡng của app, kết thúc lượt tự chạy hoặc dừng nhịp tiến trong lượt lái tay.
+5. Cả hai chế độ dùng khoảng cách từ pose thật để phát vận tốc 0 và đánh dấu `reached` khi vào bán kính. Sau lượt lái tay, phím S xác nhận thêm nhãn STOP nếu có scan và odometry mới, đồng bộ và robot còn ở trong vòng đích. Contact, `End run`, mất telemetry hoặc hết thời hạn đều kết thúc lượt. Runtime cho 120 giây lái tay, 60 giây tự chạy ở Arena và 90 giây tự chạy ở MazeBot. Guard LiDAR 0,38 m là ngưỡng của app, kết thúc lượt tự chạy hoặc dừng nhịp tiến trong lượt lái tay.
 6. Mỗi lượt có ID, chế độ, pose đầu và đích riêng. Khi kết thúc, `NavigationHistory` lưu một JSON trong volume. Tự chạy ghi thêm độ trễ đo quanh `model.predict()`. Server trở về `idle` với trạng thái `reached` hoặc `terminated`. Có thể đặt đích và bắt đầu lượt khác từ pose hiện tại trong cùng phiên.
 7. `Reset session` lưu CSV đang có, gửi reset world và chờ scan/odom thuộc thời điểm mới sau khi thời gian mô phỏng quay về đầu. Khi thành công, server tạo ID phiên mới, xoá trail và trạng thái lượt cuối trên màn hình. Model đã chọn và các lần train vẫn dùng lại được. UI lọc lịch sử theo phiên hiện tại.
 
@@ -177,7 +177,7 @@ session_id,world,scan_time,wall_time,left,front_left,front,front_right,right,lin
 
 | Nơi lưu hoặc file | Ý nghĩa |
 | --- | --- |
-| `reference/arena/` và `reference/maze/` | CSV, model và đánh giá dựng sẵn theo map. Cả hai mặc định chọn Decision Tree để thử hai ca ngắn trong README. |
+| `reference/arena/` và `reference/maze/` | CSV final, bốn model và đánh giá dựng sẵn theo map. Cả hai chọn Random Forest mặc định để chạy hai ca ngắn trong README. |
 | `runs/<run_id>/dataset.csv`, `run.json` | Ảnh chụp CSV và metadata nguồn của lần train mới. |
 | `runs/sessions/<session_id>.csv` | Bản CSV phiên lái tay được lưu khi reset. |
 | `models/<thuật toán>.joblib` trong mỗi lần train | Estimator đã fit cùng metadata đầu vào, hành động và thư viện. Majority baseline có báo cáo nhưng không tạo bundle điều khiển. |

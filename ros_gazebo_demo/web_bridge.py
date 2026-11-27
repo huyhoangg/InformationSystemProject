@@ -109,6 +109,7 @@ class Monitor(Node):
         self.history = history
         self.workspace = workspace
         self.robot_name = scenario['robot']
+        self.auto_duration = scenario.get('auto_duration', RUN_DURATION['auto'])
         self.navigation_run = None
         self.trace_log = None
         self.final_run = None
@@ -249,7 +250,7 @@ class Monitor(Node):
         now = datetime.now(timezone.utc)
         self.mode = mode
         self.started = started
-        self.deadline = started + RUN_DURATION[mode]
+        self.deadline = started + (self.auto_duration if mode == 'auto' else RUN_DURATION[mode])
         self.elapsed = 0.0
         self.trail.clear()
         self.trail.append([self.pose['x'], self.pose['y']])

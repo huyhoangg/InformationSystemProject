@@ -31,7 +31,7 @@ Mở <http://127.0.0.1:8000> và dùng **Operator View**.
 
 1. Trong **Goal**, dùng **Pick on map** rồi bấm một điểm trống trên bản đồ, hoặc nhập X/Y theo mét và bấm **Set goal**.
 2. Bấm **Start manual** rồi dùng **W/A/D** hoặc các nút để đi tới đích. **S** hoặc **Record STOP** gửi vận tốc 0 và thu mẫu `stop` trong lượt. Khi một nhịp phím hết hạn, robot dừng và lượt tiếp tục chờ thao tác. **Start autonomous** bắt đầu một lượt dùng model đang active.
-3. Khi vào vòng đích, robot dừng, hiển thị **Destination reached** và lưu lượt. Sau khi lái tay tới đích, bấm **S** hoặc **Record STOP** để lưu nhãn STOP của lượt vừa xong. Dùng **End run** nếu muốn kết thúc sớm. App giới hạn 120 giây cho lượt lái tay và 60 giây cho lượt tự chạy. Khi LiDAR chặn tiến trong lượt lái tay, bạn có thể quay để tiếp tục tới đích.
+3. Khi vào vòng đích, robot dừng, hiển thị **Destination reached** và lưu lượt. Sau khi lái tay tới đích, bấm **S** hoặc **Record STOP** để lưu nhãn STOP của lượt vừa xong. Dùng **End run** nếu muốn kết thúc sớm. App giới hạn 120 giây khi lái tay, 60 giây khi tự chạy ở Arena và 90 giây khi tự chạy ở MazeBot. Khi LiDAR chặn tiến trong lượt lái tay, bạn có thể quay để tiếp tục tới đích.
 4. Đặt đích tiếp theo rồi bấm Start. Robot xuất phát từ vị trí đang đứng. Các mẫu từ nhiều lượt lái tay cùng được giữ trong CSV phiên hiện tại. Để thu dữ liệu, thử các đường đi có đích khác nhau, cả đoạn thẳng, rẽ và vòng vật cản. Thu từ pose xuất phát mới bằng **Reset session** khi cần đổi cả phiên.
 
 **Reset session** trên thanh đầu trang đưa robot về pose xuất phát, đưa trạng thái về standby, đặt lại đường đi và bắt đầu phiên thu mới với đích đã chọn. CSV lái tay của phiên trước được lưu tự động nếu có mẫu. Có thể chọn lại CSV đó ở **DS Workspace → Saved driving session**. `Navigation Runs` mặc định xem **This session**. Chọn **All sessions** để xem kết quả cũ. Gazebo khôi phục world qua dịch vụ `/world/integration_demo/control`. [API reset của Gazebo](https://gazebosim.org/api/sim/8/reset_simulation.html)
@@ -40,7 +40,7 @@ Mở <http://127.0.0.1:8000> và dùng **Operator View**.
 
 Trong **DS Workspace**, chọn **Packaged driving data**, CSV lái tay hiện tại, phiên đã lưu hoặc upload CSV có cùng world. Bảng **Model Comparison** mở kết quả của lần train đóng gói khi vào lần đầu. Chọn **Train models** để tạo lần train mới. App huấn luyện KNN, Gaussian Naive Bayes, Decision Tree và Random Forest trên cùng tập train, sau đó so sánh điểm test với majority baseline. Bấm ô ngoài đường chéo trong confusion matrix để xem các mẫu dự đoán sai.
 
-Để chấm nhanh, mở Operator View và bấm `Start autonomous` với cấu hình ban đầu. Cả hai map chọn Decision Tree. Arena chạy từ `(0, 0)` tới `(0.67, 0.00)` và MazeBot chạy từ `(-5, 3)` tới `(-4.30, 3.00)`. Khi so sánh các model, reset về cùng spawn và nhập lại cùng đích. DS Workspace gom các lượt tự chạy theo start pose làm tròn 0,1 m, hướng 5° và đích cùng bán kính. Bảng tách các phiên bản dữ liệu đóng gói theo mã băm. Tỷ lệ va chạm lấy mẫu số là lượt có dữ liệu contact.
+Để chấm nhanh, mở Operator View và bấm `Start autonomous` với cấu hình ban đầu. Cả hai map chọn Random Forest. Arena chạy từ `(0, 0)` tới `(0.67, 0.00)` và MazeBot chạy từ `(-5, 3)` tới `(-4.30, 3.00)`. Khi so sánh các model, reset về cùng spawn và nhập lại cùng đích. DS Workspace gom các lượt tự chạy theo start pose làm tròn 0,1 m, hướng 5° và đích cùng bán kính. Bảng tách các phiên bản dữ liệu đóng gói theo mã băm. Tỷ lệ va chạm lấy mẫu số là lượt có dữ liệu contact.
 
 Chọn `Use …` khi robot đang dừng. Trong **Operator View**, kiểm tra tên model và mã lần train rồi bấm `Start autonomous`. Khi đang tự chạy, DS Workspace có thao tác riêng **Deploy … mid-run**. Lượt đổi model hoặc đích giữa chừng vẫn được lưu, với dấu mốc trong Cycle Log. Bảng tổng hợp theo kịch bản dùng các lượt giữ nguyên cấu hình. Các lần train hoàn tất và CSV tương ứng được lưu trong volume Docker. CSV lái tay của phiên đang thu nằm trong bộ nhớ. Hãy tải file hoặc train từ phiên đó trước khi tắt container.
 
@@ -49,6 +49,8 @@ Chọn `Use …` khi robot đang dừng. Trong **Operator View**, kiểm tra tê
 Log các lượt nằm trong `runs/navigation/`, được giữ qua lần khởi động sau khi gắn volume như lệnh Docker trên. Ở CSV, `collision=1` là đã nhận contact hợp lệ, `0` là trong lượt có publisher ROS contact kết nối và không nhận contact hợp lệ, ô trống là nguồn đo chưa sẵn sàng. Trước khi lấy tỷ lệ va chạm trên world chính thức, thử chạm vật cản và đối chiếu bản ghi. Gazebo dùng contact sensor để phát sự kiện vật lý và bridge chuyển message sang ROS 2. [Cảm biến contact của Gazebo Harmonic](https://gazebosim.org/docs/harmonic/sensors/) · [Kiểu message bridge Jazzy](https://github.com/gazebosim/ros_gz/blob/jazzy/ros_gz_bridge/README.md)
 
 Cổng Docker được bind vào localhost. Volume `isproject-final-runs` lưu các phiên và lần train mới của bản nộp.
+
+Để chạy với lịch sử trắng và vẫn có dữ liệu mẫu, mở container mới từ image đã build với cùng lệnh nhưng bỏ tham số `-v`. Khi dừng container có `--rm`, hãy xuất CSV của phiên hiện tại và các log cần giữ trước.
 
 ### Điều khiển và phân tích theo chu kỳ
 
@@ -104,27 +106,36 @@ ros2 launch ros_gazebo_demo/demo.launch.py web:=true
 
 ## Dữ liệu đóng gói và provenance
 
-Mỗi map có một phiên train và một phiên test thu từ bản app sạch với các đích liên tiếp. Vai Operator được tái hiện bằng sự kiện W/A/D/S trong trình duyệt. Mỗi lượt dùng đích chọn trước, giữ phím để quay và tiến, sau đó bấm S xác nhận dừng tại đích. Nhóm đo LiDAR và odometry thật từ Gazebo. Hướng dẫn tái lập nằm trong thư mục `reports` cùng cấp repo.
+Mỗi map dùng một phiên train và một phiên test thu mới qua W/A/D/S trong các container sạch. Operator Arena chọn hướng theo hành lang LiDAR tại mỗi nhịp. Operator MazeBot lái qua các điểm dẫn đường đã chọn để vòng tường, giữ nguyên đích cuối của từng lượt. Bấm S để ghi STOP sau khi tới đích. Auto-run dùng model dự đoán từ chín feature của đặc tả. [Quy trình thu và đánh giá](../../reports/materials/RULES.md)
 
 | Map | Nguồn | Mẫu | Train / test |
 | --- | --- | ---: | ---: |
-| Obstacle Arena | Hai phiên Operator riêng gồm 12 lượt train và 8 lượt test. [Train](data/arena.csv) · [Test](data/arena_test.csv) | 335 | 189 / 146 |
-| MazeBot Labyrinth | Hai phiên Operator riêng gồm 16 lượt train và 7 lượt test. [Train](data/maze.csv) · [Test](data/maze_test.csv) | 580 | 419 / 161 |
+| Obstacle Arena | Hai phiên Operator riêng gồm 10 lượt train và 6 lượt test. [Train](data/arena.csv) · [Test](data/arena_test.csv) | 745 | 492 / 253 |
+| MazeBot Labyrinth | Hai phiên Operator riêng gồm 11 lượt train và 7 lượt test. [Train](data/maze.csv) · [Test](data/maze_test.csv) | 1.037 | 651 / 386 |
 
 Cả bốn CSV dùng `label_source=operator`. Nhãn STOP bắt nguồn từ phím S. Model được fit trên toàn bộ phiên train rồi đánh giá trên phiên test riêng của cùng map. Đây là kết quả phân loại từ image Docker đóng gói.
 
 | Model | Arena Accuracy | Arena Macro-F1 | MazeBot Accuracy | MazeBot Macro-F1 |
 | --- | ---: | ---: | ---: | ---: |
-| KNN | 91,1% | 0,844 | 98,1% | 0,944 |
-| Gaussian Naive Bayes | 85,6% | 0,765 | 95,7% | 0,933 |
-| Decision Tree | 93,2% | 0,915 | 96,9% | 0,952 |
-| Random Forest | 95,9% | 0,947 | 97,5% | 0,960 |
-| Majority baseline | 68,5% | 0,203 | 76,4% | 0,217 |
+| KNN | 84,6% | 0,785 | 93,5% | 0,769 |
+| Gaussian Naive Bayes | 85,8% | 0,841 | 93,3% | 0,900 |
+| Decision Tree | 82,2% | 0,823 | 90,9% | 0,881 |
+| Random Forest | 84,6% | 0,859 | 95,6% | 0,947 |
+| Majority baseline | 66,8% | 0,200 | 69,7% | 0,205 |
 
 Kết quả phân loại đo khả năng dự đoán hành động của phiên Operator. Sau khi deploy, đánh giá điều hướng bằng các lượt tự chạy trên cùng kịch bản.
 
 ### Kết quả điều hướng theo kịch bản
 
-Benchmark reset robot trước mỗi lượt, thử ba đích trên mỗi map và lặp hai lần cho mỗi model ở từng đích. Trong 48 lượt, 16 lượt tới đích, 9 lượt bị LiDAR chặn và 23 lượt vượt giới hạn thử 12 s. Gazebo ghi nhận 0/48 lượt va chạm. Decision Tree đạt 4/6 lượt mỗi map. Báo cáo, ma trận và log từng lượt nằm trong thư mục `reports` cùng cấp repo.
+Benchmark gồm 56 lượt cho bốn model. Robot reset về pose xuất phát trước mỗi lượt và mỗi model lặp hai lần cho từng đích. Arena có bốn ca với giới hạn 45 giây. MazeBot có ba ca với giới hạn 90 giây.
+
+| Model | Arena tới đích | MazeBot tới đích |
+| --- | ---: | ---: |
+| KNN | 6/8 | 2/6 |
+| Gaussian Naive Bayes | 4/8 | 2/6 |
+| Decision Tree | 2/8 | 2/6 |
+| Random Forest | 6/8 | 2/6 |
+
+Gazebo contact ghi nhận 0 va chạm trong 56 lượt. KNN tới đích 2/2 ở ca A3 sau hộp và Random Forest tới đích 2/2 ở ca A4 xa phía tây bắc. Cả bốn model chưa tới đích ở M2 và M3. [Dữ liệu, ma trận và log final](../../reports/materials/README.md)
 
 FR-03 dùng LiDAR để trích đặc trưng. FR-14 cho phép kết thúc lượt tự chạy và FR-15 yêu cầu lưu trạng thái, thời gian cùng thông tin va chạm. Mức 0,38 m là ngưỡng do app sử dụng. `lidar_clearance` là lý do dừng, còn tỷ lệ va chạm được tính từ contact Gazebo.

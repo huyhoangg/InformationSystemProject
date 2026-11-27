@@ -4,7 +4,7 @@ Checklist theo phạm vi phụ trách của **Hiển** (Gazebo và dữ liệu m
 
 Đọc [kiến trúc và mô tả mã nguồn](SYSTEM_ARCHITECTURE.md) để tra file, API, schema hiện tại và hợp đồng Gazebo. Đặc tả `FR-01…FR-17` là căn cứ nghiệm thu chức năng. Các panel và thao tác bổ sung của PDF có tiêu chí riêng ở bước 4.
 
-Obstacle Arena và MazeBot Labyrinth trong repo là hai cấu hình của bản nộp. Kết quả chính dùng bộ CSV đóng gói và 48 lượt benchmark. Kết quả thu lại theo rule LiDAR dùng image thử nghiệm riêng. [Báo cáo và minh chứng](../../reports/README.md) · [Thử nghiệm bổ sung](../../reports/reactive-driving/README.md)
+Obstacle Arena và MazeBot Labyrinth trong repo là hai cấu hình của bản nộp. Bộ CSV đóng gói gồm mẫu Arena theo hành lang LiDAR và mẫu MazeBot lái vòng tường qua các điểm dẫn đường. Báo cáo so sánh bốn model qua 56 lượt tự chạy trên hai map. [Kết quả và minh chứng](../../reports/materials/README.md)
 
 ## 1. Đã làm
 
@@ -37,15 +37,15 @@ Obstacle Arena và MazeBot Labyrinth trong repo là hai cấu hình của bản 
 - [x] Chạy thử qua Docker **demo** theo luồng lái tay → có CSV → train **CSV tham chiếu** → chọn Random Forest mới → bắt đầu chạy tự động → dừng. Đã kiểm tra từ chối đổi model trong lúc chạy.
 - [x] Cập nhật preview, trainer, bundle và giao diện cho CSV 9 feature / 4 nhãn. Các bộ thiếu schema được giữ để đối chiếu trong lưu trữ.
 - [x] Thay cách lấy mẫu bằng feature trước khi áp dụng hành động. Đã train với **80 mẫu** mới sau khi reset. CSV 9 feature cũ hiển thị cảnh báo nếu thiếu metadata về thời điểm lấy mẫu.
-- [x] Thu mới phiên train và test qua W/A/D/S cho cả hai map. Đóng gói 189/146 mẫu Arena và 419/161 mẫu MazeBot với 9 feature và 4 nhãn. [Nguồn dữ liệu và kết quả](../ros_gazebo_demo/README.md#dữ-liệu-đóng-gói-và-provenance)
+- [x] Thu phiên train và test qua W/A/D/S cho cả hai map. Đóng gói 492/253 mẫu Arena và 651/386 mẫu MazeBot với 9 feature và 4 nhãn. [Nguồn dữ liệu và kết quả](../ros_gazebo_demo/README.md#dữ-liệu-đóng-gói-và-provenance)
 - [x] Chuyển CSV tham chiếu cũ, dữ liệu A* và script thu cũ sang lưu trữ ngoài repo. Image bản nộp nạp đúng bốn CSV mới. Dùng volume riêng cho bản nộp.
-- [x] Chạy 48 lượt benchmark từ pose xuất phát cố định. Lưu báo cáo, log và ma trận trong `reports` cùng cấp repo. [Tóm tắt kết quả](../ros_gazebo_demo/README.md#kết-quả-điều-hướng-theo-kịch-bản)
+- [x] Chạy benchmark bốn model từ pose xuất phát cố định. Lưu kết quả, log và ma trận trong `reports/materials` cùng cấp repo. [Tóm tắt kết quả](../ros_gazebo_demo/README.md#kết-quả-điều-hướng-theo-kịch-bản)
 - [x] So sánh kết quả các lượt tự chạy theo map, start pose, đích và bán kính tới đích trong DS Workspace.
 
 ## 2. Ưu tiên 1 · Cố định bản trình diễn để chạy lại
 
 - [x] Dùng Docker với ROS 2 Jazzy + Gazebo Harmonic và UI web 2D. Bộ chọn map chuyển đúng robot, goal, session, dataset và model. Dùng chung W/A/D/S, auto và log lượt cho hai map.
-- [x] Cố định sáu kịch bản trên hai map. Dùng cùng pose xuất phát, đích, bán kính và giới hạn giờ cho các model trong cùng kịch bản. Có ca tới đích, ca bị LiDAR chặn và ca hết giờ. [Cấu hình benchmark](../../reports/materials/protocol.json)
+- [x] Cố định bảy kịch bản trên hai map. Mỗi ca có hai lượt từ cùng pose xuất phát, đích và bán kính. Giới hạn 45 giây cho Arena, 90 giây cho MazeBot. [Hồ sơ test](../../reports/materials/test_cases/README.md)
 - [x] Build và kiểm tra image Docker mới trong container riêng trên máy phát triển. Đã thu dữ liệu từ image sạch, train trong DS Workspace và chạy tự động tới đích mặc định trên cả hai map với image bản nộp.
 - [x] Đưa CSV, manifest, kết quả test, log điều hướng và hướng dẫn tái lập vào bộ nộp và thư mục báo cáo. Đã thử nạp CSV mới, train và deploy qua app.
 
@@ -59,7 +59,7 @@ Thứ tự phụ thuộc là **chốt schema → thu dữ liệu → train/test 
 - [x] Chuẩn bị ca đi thẳng, rẽ và đích khuất trên hai map. Reset trước từng lượt để so sánh kết quả `reached` và `terminated` từ cùng pose.
 - [x] Thu bốn phiên đóng gói bằng sự kiện bàn phím tái hiện vai Operator. Có đủ `FORWARD / LEFT / RIGHT / STOP` với các đích và góc khác nhau. Tách train/test theo mã phiên và lưu số mẫu mỗi lớp.
 - [x] Nối contact cho Arena và MazeBot. Đã kiểm chứng event va chạm khi chạm vật cản ở Arena. Log benchmark ghi trạng thái theo dõi contact trên cả hai map.
-- [x] Chạy loạt thí nghiệm bản nộp với cùng điều kiện cho từng model. Lưu world, spawn, goal, bán kính, cấu hình reset và log từng lượt. [Log benchmark](../../reports/materials/navigation/)
+- [x] Chạy benchmark bốn model với thiết lập chung theo kịch bản. Lưu world, spawn, goal, bán kính, cấu hình reset và log từng lượt. [Minh chứng benchmark](../../reports/materials/test_cases/four_models/README.md)
 
 ### Hoàng · Collector, runtime và Operator View
 
@@ -74,13 +74,11 @@ Thứ tự phụ thuộc là **chốt schema → thu dữ liệu → train/test 
 
 - [x] Xác nhận CSV và bundle của cả hai map dùng cùng schema và cấu hình lệnh. Trainer kiểm tra cột, nhãn, đơn vị lệnh và giá trị không hợp lệ.
 - [x] Chia train/test theo hai phiên thu độc lập cho từng map. Bốn model dùng cùng split và chỉ fit tiền xử lý trên train. Tham số cố định nên thử nghiệm dùng hai tập train/test.
-- [x] Train KNN, Gaussian Naive Bayes, Decision Tree và Random Forest. Lưu tham số, mã băm CSV, phân bố lớp, chỉ số test và confusion matrix **4 × 4**. [Kết quả phân loại bản nộp](../../reports/materials/classification/)
+- [x] Train KNN, Gaussian Naive Bayes, Decision Tree và Random Forest. Lưu tham số, mã băm CSV, phân bố lớp, chỉ số test và confusion matrix **4 × 4**. [Arena](../../reports/materials/arena/classification/) · [MazeBot](../../reports/materials/maze/classification/)
 - [x] Kiểm tra CSV có `STOP`, CSV lỗi và luồng nạp CSV mới → train → chọn bundle → xác nhận model đang chạy. Trong DS Workspace có thể xem mẫu dự đoán sai và tải CSV đúng lần train.
-- [x] Hiện bảng so sánh điều hướng theo model và kịch bản. Tổng hợp số lượt, tỷ lệ tới đích, tỷ lệ va chạm, thời gian, quãng đường và độ trễ suy luận. Báo cáo ghi rõ cách tính. [Bảng kết quả](../../reports/materials/navigation/summary_by_model.csv)
-- [x] Hoàn thành báo cáo thực nghiệm với kết quả 48 lượt và ma trận nhầm lẫn. Đã phân tích điểm offline cùng kết quả tự chạy, gồm Decision Tree tới đích 4/6 lượt trên mỗi map. [Báo cáo Word](../../reports/Bao_cao_danh_gia_dieu_huong_Gazebo.docx)
-- [x] Ghi và chạy rule thu bổ sung theo LiDAR qua W/A/D/S. Cố định đích cuối, quay về đích, rẽ về phía thoáng và đi dọc vật cản trước khi hướng lại về đích. Thu 975/417 mẫu Arena và 999/576 mẫu MazeBot. [Rule và quy trình thu](../../reports/reactive-driving/README.md#cách-thu-và-train-lại)
-- [x] Tăng giới hạn benchmark lên 45 giây cho thử nghiệm A3/M3. Đo 16 lượt với bộ cũ, train/deploy từ bộ mới rồi đo 16 lượt cùng cấu hình. Cả hai bộ đạt 0/16 ở đích khuất. Kiểm tra thêm đích thẳng trên hai map và lưu log. [So sánh trước và sau](../../reports/reactive-driving/navigation_summary.csv)
-- [x] Lưu Accuracy, Balanced Accuracy, Macro Precision, Macro Recall và Macro-F1 cho train/test của bộ thử nghiệm. Tổng hợp 2.967 mẫu theo phiên, nhãn, mức gần vật cản, lượt kết thúc sớm và phân bố chín feature. [Thống kê dữ liệu](../../reports/reactive-driving/README.md#thống-kê-dữ-liệu) · [Điểm train/test](../../reports/reactive-driving/classification/split_metrics.csv)
+- [x] Hiện bảng so sánh điều hướng theo model và kịch bản. Tổng hợp số lượt, tỷ lệ tới đích, tỷ lệ va chạm, thời gian, quãng đường và độ trễ suy luận. [Cách tính](../../reports/materials/RULES.md#đánh-giá-tự-chạy)
+- [x] Ghi quy tắc thu Arena theo hành lang LiDAR và MazeBot qua các điểm dẫn đường vòng tường. Phím S ghi STOP ở đích cuối. [Quy tắc thu](../../reports/materials/RULES.md)
+- [x] Lưu ma trận nhầm lẫn, số mẫu theo nhãn, kết quả offline và 56 lượt tự chạy. Báo cáo ghi kết quả theo từng ca và giới hạn ở M2/M3. [Minh chứng final](../../reports/materials/README.md)
 
 **Qua bước 3 khi** nhóm thực hiện được **lái tay → thu CSV 4 lớp → train trên web → so sánh trên test độc lập → chọn model → robot chạy tới đích hoặc kết thúc có lý do → xem kết quả điều hướng đã lưu** trên world chính thức.
 
@@ -127,15 +125,15 @@ Thứ tự phụ thuộc là **chốt schema → thu dữ liệu → train/test 
 | FR-11 · Tích hợp model | Đã làm | Kích hoạt bundle hợp lệ trên đúng map và có mã model/dataset trong log. |
 | FR-12 · Suy luận theo chu kỳ | Đã làm | ROS adapter tạo vector 9 feature và gọi model đang active theo chu kỳ khi chạy tự động. |
 | FR-13 · Ánh xạ sang lệnh | Đã làm | Bốn nhãn được chuyển sang vận tốc ROS, với vận tốc 0 cho `STOP`. |
-| FR-14 · Vòng lặp tới đích/kết thúc | Đã làm | Benchmark bản nộp có 16/48 lượt tới đích, các lượt còn lại có lý do kết thúc trong log. |
+| FR-14 · Vòng lặp tới đích/kết thúc | Đã làm | Random Forest tới đích 6/8 lượt Arena và 2/6 lượt MazeBot. Bốn lượt dừng do LiDAR và hai lượt hết giờ. |
 | FR-15 · Lưu lượt thử | Đã làm | JSON/CSV ghi đích, thời gian, quãng đường, trạng thái cuối và nguồn đo va chạm. |
-| FR-16 · So sánh điều hướng | Đã làm | Có bảng theo model và kịch bản trên hai map. Dùng cùng pose, đích và điều kiện cho các model trong cùng ca. |
+| FR-16 · So sánh điều hướng | Đã làm | Có 56 lượt cho bốn model, dùng cùng pose, đích và điều kiện trong từng ca. Bảng theo model và kịch bản có sẵn trên hai map. |
 | FR-17 · Giám sát và kết quả cuối | Đã làm | Operator View hiển thị dự đoán, khoảng cách và trạng thái. `Navigation Runs` lưu kết quả cuối để xem lại. |
 
 ## 6. Checklist trước khi trình diễn và nộp
 
-- [x] Có hai ca demo tới đích mặc định, ca LiDAR chặn và ca hết giờ. Reset pose trước từng lượt thử so sánh.
+- [x] Có hai ca demo tới đích mặc định và ca LiDAR chặn. Reset pose trước từng lượt thử so sánh.
 - [x] Kiểm tra thu CSV bằng bàn phím, train bốn model, xem kết quả, chọn bundle, chạy tự động và đối chiếu model trong log trên bản Docker của máy phát triển.
-- [x] Lưu CSV thu mới, manifest, bảng điểm, ma trận nhầm lẫn, sơ đồ kịch bản và log. Báo cáo Word dùng kết quả của bộ dữ liệu đóng gói. Thử nghiệm LiDAR có báo cáo và thống kê riêng.
+- [x] Lưu CSV final, manifest, bảng điểm, ma trận nhầm lẫn, kịch bản, log và quy tắc thu để viết báo cáo tổng kết. [Materials](../../reports/materials/README.md)
 
 Nguồn đối chiếu nằm cạnh repo trong workspace môn học. [Đặc tả dự án](../../docs/project_specification_submission.md) · [Mockup 9 trang](<../../docs/Navigation_Monitor_Mockup_EN 3.pdf>) · [Sơ đồ nhóm trên Zalo](<../../trao đổi zalo/6.png>) · [Phân công DS](<../../trao đổi zalo/7.png>).
